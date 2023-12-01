@@ -1,3 +1,5 @@
+// main.go
+
 package main
 
 import (
@@ -8,38 +10,26 @@ import (
 	"github.com/eron97/restfull_api.git/config/routers"
 	"github.com/eron97/restfull_api.git/config/services"
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 )
 
 func main() {
-
-	// Carregando variáveis de ambiente a partir do arquivo .env
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Erro ao carregar as variáveis de ambiente")
+	if err := godotenv.Load(".env"); err != nil {
+		log.Fatal("Erro ao carregar as variáveis de ambiente:", err)
 	}
 
-	// Obtendo as credenciais do banco de dados das variáveis de ambiente
 	dbCredentials := os.Getenv("DB_CREDENTIALS")
 
-	dbConnector := &database.MySQLConnector{
-		Credentials: dbCredentials,
-	}
-
-	db, err := dbConnector.Connect()
+	tdb, err := database.NewTodoDB(dbCredentials)
 	if err != nil {
-		return
+		log.Fatal("Erro ao inicializar o banco de dados:", err)
 	}
 
-	_ = &services.MyTodoListService{
-		DBConnector: db,
-	}
+	defer tdb.CloseDB()
 
+	todoService := services.NewMyTodoListService(tdb)
 	r := gin.Default()
-
-	routers.SetupTaskRoutes(r)
-
+	routers.SetupTaskRoutes(r, todoService)
 	r.Run()
-
-	db.Close()
-
 }

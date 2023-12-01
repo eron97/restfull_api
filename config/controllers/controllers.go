@@ -1,3 +1,5 @@
+// package controllers
+
 package controllers
 
 import (
@@ -7,10 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetAllTasksController(c *gin.Context) {
+var todoService services.TodoListService
 
-	service := &services.MyTodoListService{}
-	todoItems, err := service.GetAllTasksService()
+func SetTodoService(service services.TodoListService) {
+	todoService = service
+}
+
+func GetAllTasksController(c *gin.Context) {
+	todoItems, err := todoService.GetAllTasksService()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar tarefas"})
 		return
@@ -26,6 +32,5 @@ func GetTaskByName(c *gin.Context) {
 }
 
 func AddTask(c *gin.Context) {
-
 	c.JSON(http.StatusOK, gin.H{"tasks": ""})
 }

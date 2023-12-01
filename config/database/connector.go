@@ -1,3 +1,5 @@
+// config/database/database.go
+
 package database
 
 import (
@@ -7,27 +9,33 @@ import (
 	"github.com/eron97/restfull_api.git/config/models"
 )
 
-type DBConnector interface {
-	Connect() (*sql.DB, error)
+type TodoRepository interface {
+	GetAllTasksRepository() ([]models.TodoItem, error)
 }
 
-type MySQLConnector struct {
-	Credentials string
+type TodoDB struct {
+	db *sql.DB
 }
 
-func (m *MySQLConnector) Connect() (*sql.DB, error) {
-	db, err := sql.Open("mysql", m.Credentials)
+func NewTodoDB(credentials string) (*TodoDB, error) {
+	db, err := sql.Open("mysql", credentials)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
 
 	log.Println("[InitDB] Conexão bem-sucedida com AWS RDS")
-	return db, nil
+	return &TodoDB{db}, nil
 }
 
-func GetAllTasksRepository(db *sql.DB) ([]models.TodoItem, error) {
-	rows, err := db.Query("SELECT * FROM tasks")
+func (tdb *TodoDB) CloseDB() {
+	if tdb.db != nil {
+		tdb.db.Close()
+	}
+}
+
+func (tdb *TodoDB) GetAllTasksRepository() ([]models.TodoItem, error) {
+	rows, err := tdb.db.Query("SELECT * FROM tasks")
 	if err != nil {
 		return nil, err
 	}
